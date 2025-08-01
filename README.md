@@ -16,36 +16,73 @@ Short summary:
  
 ## Установка и настройка
 
- Установка LangGraph CLI
+### 1. Установка зависимостей
 ```bash
+# Создание виртуального окружения
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Установка LangGraph CLI
 pip install -U "langgraph-cli[inmem]"
-```
-Установка проекта
-```bash
+
+# Установка проекта
 pip install -e .
 ```
 
 ### 2. Конфигурация окружения
-Создайте файл `.env`:
+Создайте файл `.env` в корне проекта:
 ```env
 # Search API Configuration
 TAVILY_API_KEY=your_tavily_key_here
 
 # LLM Configuration
-LLM_API_KEY=your_api_key_here
-LLM_API_BASE=https://your-vllm-server/v1
-LOCAL_LLM=your_model_name
+OPENAI_API_KEY=your_api_key_here
+OPENAI_API_BASE=https://your-vllm-server/v1/chat/completions
+OPENAI_MODEL=your_model_name
 ```
 
 ### 3. Запуск
-Локальный запуск
 ```bash
+# Для zsh (рекомендуется)
+set -a
+source .env
+set +a
 langgraph dev
+
+# Альтернативный способ
+env $(cat .env | grep -v '^#' | xargs) langgraph dev
 ```
 
 ### 4. Доступ к интерфейсу
 - Локально: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
 - На сервере: https://smith.langchain.com/studio/?baseUrl=https://your-domain.com
+
+## Troubleshooting
+
+### "LLM API Key is required"
+1. Проверьте правильность переменных в `.env` (см. пример выше)
+2. Перезапустите сервер в новом терминале
+
+### "Address already in use"
+```bash
+pkill -f langgraph
+langgraph dev
+```
+
+### Переменные не загружаются
+```bash
+# Проверьте переменные
+echo $OPENAI_API_KEY
+
+# Проверьте формат .env
+cat -vet .env
+
+# Очистите кеши Python
+find . -name "*.pyc" -delete
+find . -name "__pycache__" -type d -exec rm -r {} +
+```
+
+Подробное руководство по решению проблем: [SETUP_GUIDE.md](SETUP_GUIDE.md)
 
 ## Схемы и процесс обработки
 Все промпты можно найти в [prompts.py](src%2Fassistant%2Fprompts.py)

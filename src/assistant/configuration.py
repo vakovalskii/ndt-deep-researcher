@@ -4,6 +4,13 @@ from typing import Any, Optional
 from langchain_core.runnables import RunnableConfig
 from enum import Enum
 
+# Автоматическая загрузка .env
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 class SearchAPI(Enum):
     PERPLEXITY = "perplexity"
@@ -46,8 +53,6 @@ class Configuration:
         # Получаем значения из configurable
         configurable = config.get("configurable", {}) if config else {}
 
-        print(f"Config from UI: {configurable}")  # Отладочный вывод
-
         values: dict[str, Any] = {}
 
         for field in fields(cls):
@@ -73,12 +78,25 @@ class Configuration:
             if field_name in cls.DEFAULTS:
                 values[field_name] = cls.DEFAULTS[field_name]
 
-        print(f"Final values: {values}")  # Отладочный вывод
-
         return cls(**values)
 
     def __post_init__(self):
-        """Валидация после инициализации"""
+        # Если поле пустое, загружаем из переменных окружения
+        if not self.llm_api_key:
+            env_value = os.getenv("OPENAI_API_KEY")
+            if env_value:
+                self.llm_api_key = env_value
+        
+        if not self.llm_api_base:
+            env_value = os.getenv("OPENAI_API_BASE")
+            if env_value:
+                self.llm_api_base = env_value
+        
+        if not self.local_llm or self.local_llm == self.DEFAULTS["local_llm"]:
+            env_value = os.getenv("OPENAI_MODEL")
+            if env_value:
+                self.local_llm = env_value
+        
         if not self.llm_api_base:
             raise ValueError("LLM API Base URL is required")
         if not self.llm_api_key:
